@@ -1,14 +1,12 @@
-# Usamos la imagen base de Java 8
-FROM openjdk:8-jdk-alpine
-
-# Establecemos el directorio de trabajo
+FROM maven:3.8.8-eclipse-temurin-8 AS build
 WORKDIR /app
+COPY pom.xml ./ 
+RUN mvn dependency:go-offline -B
+COPY src ./src
+RUN mvn clean install -DskipTests
 
-# Copiamos el archivo JAR de la aplicación (que se generará en el proceso de build)
-COPY target/eurekaserver-0.0.1-SNAPSHOT.jar /app/eurekaserver.jar
-
-# Exponemos el puerto donde correrá Eureka (puerto 8761 por defecto)
+FROM eclipse-temurin:8-jdk-alpine
+WORKDIR /app
+COPY --from=build /app/target/eurekaserver-0.0.1-SNAPSHOT.jar /app/eurekaserver.jar
 EXPOSE 8761
-
-# Comando para ejecutar la aplicación
-ENTRYPOINT ["java", "-jar", "eurekaserver.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
